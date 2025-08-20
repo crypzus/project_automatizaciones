@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <metadata>Icono procesado con svg_processor.py</metadata>
+  <g id="main_layer" transform="translate(-15.0000 -4.2000) scale(0.1800)">
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M 100 100 L 200 100 L 150 150 Z" fill="blue"/>
+    <ns1:circle xmlns:ns1="http://www.w3.org/2000/svg" cx="150" cy="60" r="30" fill="red"/>
+  </g>
+</svg>
