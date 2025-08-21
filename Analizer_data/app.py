@@ -56,7 +56,7 @@ def cargar_datos_csv(ruta_archivo):
         return None, None
 
 
-cargar_datos_csv("Gym_Exercise_Dataset_export.csv")
+cargar_datos_csv("nomina_2000.csv")
 
 
 def mostrar_resumen_datos(encabezados, datos):
@@ -75,7 +75,7 @@ def mostrar_resumen_datos(encabezados, datos):
     print(f"columnas: {', '.join(encabezados)}")
 
     # Mostrar las primeras 5 filas
-    # esto se puediera hacer con la library de panda a modo de ejemplo lo aremos sin el
+    # esto se puediera hacer con la library de panda a modo de ejemplo lo haremos sin el
     print("\n Primeras 5 filas:")
     for i, fila in enumerate(datos[:5]):
         print(f"fila {i+1}: {fila}")
@@ -300,3 +300,109 @@ def main():
             print("\ncolumnas disponibles:")
             for i, encabezado in enumerate(encabezados):
                 print(f"{i + 1}. {encabezado}")
+
+            try:
+                indice_columna = (
+                    int(input("\n Selecione el número de la columna a analizar: ")) - 1
+                )
+
+                if 0 <= indice_columna < len(encabezados):
+                    columna = encabezados[indice_columna]
+                    estadisticas = analizar_columna_numerica(datos, columna)
+                    if estadisticas:
+                        mostrar_estatisticas(estadisticas)
+                    else:
+                        print("La columna selecionada no contiene datos numéricos.")
+                else:
+                    print("Selecion no valiad.")
+            except ValueError:
+                print("Entrada no validad. Porfavor. ingresa un numero.")
+
+        elif opcion == "2":
+            # generar grafico de barras
+            print("\n Selecione las columnas para el grafico de barras: ")
+
+            print("\n columnas para el eje X: ")
+            for i, columna in enumerate(encabezados, 1):
+                print(f"{i}. {columna}")
+
+            try:
+                indice_x = (
+                    int(input("\n selecione el numero de la columna para el eje x: "))
+                    - 1
+                )
+
+                print("\nColumnas para el eje Y: ")
+                for i, columna in enumerate(encabezados, 1):
+                    print(f"{i}. {columna}")
+
+                indice_y = (
+                    int(input("\n selecione el numero de la columna para el eje Y: "))
+                    - 1
+                )
+
+                # validar que las columnas seleccionadas son validas
+
+                if 0 <= indice_x < len(encabezados) and 0 <= indice_y < len(
+                    encabezados
+                ):
+                    columna_x = encabezados[indice_x]
+                    columna_y = encabezados[indice_y]
+                    titulo = input(
+                        "Ingrese un titulo para el grafico (opcional)"
+                    ).strip()
+
+                    generar_graficos_barras(datos, columna_x, columna_y, titulo)
+
+                else:
+                    print(" Selecion no valida.")
+            except ValueError:
+                print("Entrada no valida. Por favor, ingrese un numero.")
+
+        elif opcion == "3":
+            # generar grafico de lineas
+            print("\n Selecione las columnas para el grafico de lineas: ")
+
+            print("\n Columnas para el eje X: ")
+            for i, columna in enumerate(encabezados, 1):
+                print(f"{i}.{columna}")
+            try:
+                indice_x = (
+                    int(input("\n Selecione el numero de la columna para el eje X: "))
+                    - 1
+                )
+
+                print("\n Columnas para el eje Y: ")
+                for i, columna in enumerate(encabezados, 1):
+                    print(f"{i}.{columna}")
+
+                indice_y = (
+                    int(input("\n Selecione ell numero de la columna para el eje Y: "))
+                    - 1
+                )
+
+                # validar que las columnas seleccionadas son validas
+
+                if 0 <= indice_x < len(encabezados) and 0 <= indice_y < len(
+                    encabezados
+                ):
+                    columna_x = encabezados[indice_x]
+                    columna_y = encabezados[indice_y]
+                    titulo = input(
+                        "Ingrese un titulo para el grafico (opcional)"
+                    ).strip()
+
+                    generar_graficos_lineas(datos, columna_x, columna_y, titulo)
+                else:
+                    print(" Selecion no valida.")
+            except ValueError:
+                print("Entrada no valida. Por favor, ingrese un numero.")
+        elif opcion == "4":
+            print("\n Grcias por usar el Analizador de datos, saliendo del programa.")
+            break
+        else:
+            print("Opción no válida. Por favor, seleccione una opción del menú.")
+
+
+if __name__ == "__main__":
+    main()
