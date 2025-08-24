@@ -1,129 +1,124 @@
-import os
-import json
-import re  # para expresiones regulares
-import requests
-from datetime import datetime
-from bs4 import BeautifulSoup
+from notificador import NotificadorPrecios
 
 
-class NotificadorPrecios:
-    def __init__(self, archivo_productos="productos_monitireados.json"):
-        self.archivo_productos = archivo_productos
+def mostrar_productos(notifica):
+    productos = notifica.cargar_productos()
 
-    def obtener_precios(self, url, selector_css=None, separador_miles=","):
-        """Extrae el precio de un producto de cualquier sitio web"""
+    if not productos:
+        print("\n No hay productos monitoreados.")
+        return
 
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
-                "Acept-Language": "es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7",
-            }
+    print(f"\n === PRODUCTOS MONITOREADOS {len(productos)}===")
 
-            respuesta = requests.get(url, headers=headers, timeout=10)
+    # mostrar historial de precios
+    for i, producto in enumerate(productos, 1):
+        print(f"\n {i}. {producto['nombre']}")
+        print(f"   URL: {producto['url']}")
+        print(f"  Precio Deseado:{producto['precio_deseado']}")
+        print(f" Precio Actual: {producto.get('precio_actual','No Disponible')}")
 
-            if respuesta.status_code != 200:
-                return None
+        # Mostrar historial de precio  si exixte
+        if producto.get("historial_precios"):
+            print("  Historial de precios recientes: ")
+            for registro in producto["historial_precios"][-3:]:
+                print(f"     {registro['fecha']}:{registro['precio']}")
 
-            soup = BeautifulSoup(respuesta.txt, "html.parser")
 
-            # buscar el precio usando slectores css comunes
-            precio_elem = None
-            if selector_css:
-                precio_elem = soup.select_one(selector_css)
-            else:
-                selectores_comunes = [
-                    ".precio",
-                    ".offer-price",
-                    ".curent-price",
-                    "[itemprop='price']",
-                    ".price-value",
-                    ".price-current",
-                    ".a-price",
-                    ".a-offscreen",
-                    ".#priceblock-ourprice",
-                    ".price",
-                    ".product-price",
-                    ".current-price",
-                    ".andes-money-amount__fraction",
-                    ".offer-price",
-                    ".final-price",
-                ]
+def main():
+    """Función principal del programa con menu interativo."""
+    print("=== NOTIFICADOR DE PRECIOS ===")
 
-                for selector in selectores_comunes:
-                    precio_elem = soup.select_one(selector)
-                    if precio_elem:
-                        break
-            if not precio_elem:
-                return None
-            precio_texto = precio_elem.get_text.strip()
+    # crear una instacia del notificador
+    notifica = NotificadorPrecios()
 
-            # manejar el separador de  miles
-            if separador_miles:
-                precio_texto = precio_texto.replace(".", "")
-                precio_texto = precio_texto.replace(",", ".")
-            else:
-                precio_texto = precio_texto.replace(",", "")
+    while True:
+        print("\n Opciones: ")
+        print(" 1. Agregar un producto  monitorear")
+        print(" 2. Mostrar productos monitoreados")
+        print(" 3. Actualizar precios")
+        print("4. Eliminar un producto")
+        print("5. Salir")
 
-            # extaer el valor numerico del precio
+        opcion = input("\n Selecione una opcion (1-5): ")
 
-            precio_limpio = re.sub(r"[^\d.]", "", precio_texto)
-            match = re.search(r"\d+\.\d+|\d+", precio_limpio)
+        if opcion == "1":
+            nombre = input("\n Ingrese el nombre del producto: ")
+            url = input("Ingrese laURL del producto: ")
+            precio_deseado = float(input("ingrese el precio deseado: "))
+            usar_selector = (
+                input(
+                    " Deseas  especificar un selector CSS personalizado?(s/n): "
+                ).lower()
+                == "s"
+            )
+            selector_css = None
 
-            return float(match.group()) if match else None
-        except Exception as e:
-            return None
+            if usar_selector:
+                selector_css = input("Ingresa el selector CSS para el precio:")
+            # Preguntar por el precio de miles
+            separador_miles = input(
+                "¿Cual es el separador de miles en el precio? (. O , )[por defecto ',']: "
+            ).strip()
+            if separador_miles not in [",", "."]:
+                separador_miles = ","
+                print("Usando separador de miles por defecto:','")
 
-    def cargar_productos(self):
-        """Carga la lista de productos monitoreados desde el archivo."""
-        if os.path.exists(self.archivo_productos):
-            try:
-                with open(self.archivo_productos, "r", encoding="utf-8") as file:
-                    return json.load(file)
-            except Exception:
-                pass
-        return []
-
-    def guardar_productos(self, productos):
-        """Guarda la lista de productos monitoreados en el archivo."""
-        try:
-            with open(self.archivo_productos, "w", encoding="utf-8") as file:
-                json.dump(productos, file, indent=4, ensure_ascii=False)
-        except Exception:
-            return False
-
-    def agregar_producto(
-        self, nombre, url, precio_deseado, selector_css=None, separador_miles=","
-    ):
-        """Agrega un nuevo producto a la lista de monitoreo."""
-        productos = self.cargar_productos()
-
-        # verificamos si el producto ya existe
-        for producto in productos:
-            if producto["url"] == url:
-                return False
-        # obtenemos el precio actual
-        precio_actual = self.obtener_precios(url, selector_css, separador_miles)
-
-        # crear el nuevo producto
-        nuevo_producto = {
-            "nombre": nombre,
-            "url": url,
-            "precio_deseado": float(precio_deseado),
-            "selector_css": selector_css,
-            "separador_miles": separador_miles,
-            "precio_actual": precio_actual,
-            "fecha_agregado": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "historial_precios": [],
-        }
-
-        if precio_actual is not None:
-            nuevo_producto["historial_precios"].append(
-                {
-                    "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "precio": precio_actual,
-                }
+            resultado = notifica.agregar_producto(
+                nombre, url, precio_deseado, selector_css, separador_miles
             )
 
-        productos.append(nuevo_producto)
-        self.guardar_productos(productos)
-        return True
+            if resultado:
+                print(f"\n Producto '{nombre}' agregado corectamente.")
+            else:
+                print(
+                    f"\n No se agregar el producto '{nombre}' (posiblemente ya existe)."
+                )
+
+        elif opcion == "2":
+            # mostrar productos
+            mostrar_productos(notifica)
+
+        elif opcion == "3":
+            # actulizar precios
+            print("\n Actualizando precios de todos los productos...")
+            productos_actualizados = notifica.actualizar_precios()
+            if productos_actualizados:
+                print(
+                    f"\n ¡Se encontraron {len(productos_actualizados)} productos bajo el precio deseado!"
+                )
+                for producto in productos_actualizados:
+                    print(
+                        f"- {producto['nombre']}: Precio actual {producto['precio_actual']}"
+                    )
+            else:
+                print("\n No se encontraron cambios importantes en los precios.")
+
+        elif opcion == "4":
+            # Eliminar un producto
+
+            mostrar_productos(notifica)
+            productos = notifica.cargar_productos()
+            if productos:
+                try:
+                    indice = int(
+                        input("\n Ingrese el numero del producto a eliminar: ")
+                    )
+
+                    if notifica.eliminar_produtos(indice):
+                        print("\n Producto #{indice} eleiminado correctamente.")
+                    else:
+                        print("\n No se pudo elimar  el producto #{indice}")
+                except ValueError:
+                    print("\n  Por favor ingrese un numero valido.")
+            else:
+                print("\n No hay productos para eliminar.")
+
+        elif opcion == "5":
+            print("\n Saliendo del programa. ¡Hasta luego!")
+            break
+        else:
+            print("\n Opcion invalida. Por favor seleccione una opcion del 1 al 5.")
+
+
+if __name__ == "__main__":
+    main()
