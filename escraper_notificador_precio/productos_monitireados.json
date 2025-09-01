@@ -1,0 +1,17 @@
+[
+    {
+        "nombre": "laptop",
+        "url": "https://www.mercadolibre.com.pe/laptop-gamer-lenovo-loq-15arp9-156-r7-51212g-rtx-4050-color-gris/p/MPE48940137#polycard_client=search-nordic&search_layout=stack&position=7&type=product&tracking_id=3c2a3203-f8e6-4fb0-83fe-d9b390a323ae&wid=MPE802610494&sid=search",
+        "precio_deseado": 3500.0,
+        "selector_css": null,
+        "separador_miles": ".",
+        "precio_actual": 4490.9,
+        "fecha_agregado": "2025-09-01 03:28:58",
+        "historial_precios": [
+            {
+                "fecha": "2025-09-01 03:28:58",
+                "precio": 4490.9
+            }
+        ]
+    }
+]

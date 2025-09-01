@@ -16,7 +16,7 @@ class NotificadorPrecios:
         try:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
-                "Acept-Language": "es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7",
+                "Accept-Language": "es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7",
             }
 
             respuesta = requests.get(url, headers=headers, timeout=10)
@@ -24,53 +24,74 @@ class NotificadorPrecios:
             if respuesta.status_code != 200:
                 return None
 
-            soup = BeautifulSoup(respuesta.txt, "html.parser")
+            soup = BeautifulSoup(respuesta.text, "html.parser")
 
             # buscar el precio usando slectores css comunes
-            precio_elem = None
+             # Si hay un selector personalizado, úsalo
             if selector_css:
                 precio_elem = soup.select_one(selector_css)
+                if not precio_elem:
+                    return None
+                precio_texto = precio_elem.text.strip()
             else:
-                selectores_comunes = [
-                    ".precio",
-                    ".offer-price",
-                    ".curent-price",
-                    "[itemprop='price']",
-                    ".price-value",
-                    ".price-current",
-                    ".a-price",
-                    ".a-offscreen",
-                    ".#priceblock-ourprice",
-                    ".price",
-                    ".product-price",
-                    ".current-price",
-                    ".andes-money-amount__fraction",
-                    ".offer-price",
-                    ".final-price",
-                ]
+                # Intentar MercadoLibre (andes-money-amount)
+                fraction = soup.select_one(".andes-money-amount__fraction")
+                cents = soup.select_one(".andes-money-amount__cents")
+                if fraction:
+                    precio_texto = fraction.text.strip().replace(".", "").replace(",", "")
+                    if cents:
+                        precio_texto += "." + cents.text.strip()
+                else:
+                    # Fallback: buscar otros selectores comunes
+                    selectores_comunes = [
+                        ".precio",
+                        ".offer-price",
+                        ".curent-price",
+                        "[itemprop='price']",
+                        ".price-value",
+                        ".price-current",
+                        ".a-price",
+                        ".a-offscreen",
+                        "#priceblock-ourprice",
+                        ".price",
+                        ".product-price",
+                        ".current-price",
+                        ".offer-price",
+                        ".final-price",
+                    ]
+                    precio_elem = None
+                    for selector in selectores_comunes:
+                        precio_elem = soup.select_one(selector)
+                        if precio_elem:
+                            break
+                        
+                    if not precio_elem:
+                        return None
+                    precio_texto = precio_elem.text.strip()
+                    
+            print("DEBUG precio bruto:", precio_texto)
+            
+            # --- normalización automática ---
+            precio_texto = precio_texto.replace(" ", "")
+            precio_limpio = re.sub(r"[^\d.,]", "", precio_texto)
+            
+            if "," in precio_limpio and "." in precio_limpio:
+            # ejemplo: "1.234,56" -> miles con punto, decimales con coma
+                precio_limpio = precio_limpio.replace(".", "").replace(",", ".")
+            elif "," in precio_limpio:
+            # ejemplo: "199,99" -> coma como decimal
+                precio_limpio = precio_limpio.replace(",", ".")
+            elif "." in precio_limpio:
+                partes = precio_limpio.split(".")
+                if len(partes[-1]) == 3:
+                    # ejemplo: "4.085" -> punto como miles
+                    precio_limpio = precio_limpio.replace(".", "")
+                # si son 1 o 2 dígitos, lo dejamos como decimal
 
-                for selector in selectores_comunes:
-                    precio_elem = soup.select_one(selector)
-                    if precio_elem:
-                        break
-            if not precio_elem:
-                return None
-            precio_texto = precio_elem.text.strip()
-
-            # manejar el separador de  miles
-            if separador_miles:
-                precio_texto = precio_texto.replace(".", "")
-                precio_texto = precio_texto.replace(",", ".")
-            else:
-                precio_texto = precio_texto.replace(",", "")
-
-            # extaer el valor numerico del precio
-
-            precio_limpio = re.sub(r"[^\d.]", "", precio_texto)
             match = re.search(r"\d+\.\d+|\d+", precio_limpio)
-
             return float(match.group()) if match else None
         except Exception as e:
+            print("Error en obtener precios: ", e)
             return None
 
     def cargar_productos(self):
@@ -92,7 +113,7 @@ class NotificadorPrecios:
         except Exception:
             return False
 
-    def agregar_producto(
+    def agregar_productos(
         self, nombre, url, precio_deseado, selector_css=None, separador_miles=","
     ):
         """Agrega un nuevo producto a la lista de monitoreo."""
@@ -161,7 +182,7 @@ class NotificadorPrecios:
         self.guardar_productos(productos)
         return productos_actualizados
 
-    def eliminar_produtos(self, indice):
+    def eliminar_productos(self, indice):
         """Elimina un producto de la lista de monitoreo por su índice."""
         productos = self.cargar_productos()
         

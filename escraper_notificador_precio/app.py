@@ -17,7 +17,7 @@ def mostrar_productos(notifica):
         print(f"  Precio Deseado:{producto['precio_deseado']}")
         print(f" Precio Actual: {producto.get('precio_actual','No Disponible')}")
 
-        # Mostrar historial de precio  si exixte
+        # Mostrar historial de precio  si existe
         if producto.get("historial_precios"):
             print("  Historial de precios recientes: ")
             for registro in producto["historial_precios"][-3:]:
@@ -36,14 +36,14 @@ def main():
         print(" 1. Agregar un producto  monitorear")
         print(" 2. Mostrar productos monitoreados")
         print(" 3. Actualizar precios")
-        print("4. Eliminar un producto")
-        print("5. Salir")
+        print(" 4. Eliminar un producto")
+        print(" 5. Salir")
 
-        opcion = input("\n Selecione una opcion (1-5): ")
+        opcion = input("\n Seleccione una opcion (1-5): ")
 
         if opcion == "1":
             nombre = input("\n Ingrese el nombre del producto: ")
-            url = input("Ingrese laURL del producto: ")
+            url = input("Ingrese la URL del producto: ")
             precio_deseado = float(input("ingrese el precio deseado: "))
             usar_selector = (
                 input(
@@ -63,7 +63,7 @@ def main():
                 separador_miles = ","
                 print("Usando separador de miles por defecto:','")
 
-            resultado = notifica.agregar_producto(
+            resultado = notifica.agregar_productos(
                 nombre, url, precio_deseado, selector_css, separador_miles
             )
 
@@ -71,7 +71,7 @@ def main():
                 print(f"\n Producto '{nombre}' agregado corectamente.")
             else:
                 print(
-                    f"\n No se agregar el producto '{nombre}' (posiblemente ya existe)."
+                    f"\n No se puedo agregar el producto '{nombre}' (posiblemente ya existe)."
                 )
 
         elif opcion == "2":
@@ -104,10 +104,10 @@ def main():
                         input("\n Ingrese el numero del producto a eliminar: ")
                     )
 
-                    if notifica.eliminar_produtos(indice):
-                        print("\n Producto #{indice} eleiminado correctamente.")
+                    if notifica.eliminar_productos(indice):
+                        print(f"\n Producto #{indice} elimino correctamente.")
                     else:
-                        print("\n No se pudo elimar  el producto #{indice}")
+                        print(f"\n No se pudo elimar  el producto #{indice}")
                 except ValueError:
                     print("\n  Por favor ingrese un numero valido.")
             else:
