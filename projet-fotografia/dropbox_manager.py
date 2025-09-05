@@ -18,12 +18,12 @@ def get_link_compartidos(folder_path):
         #Intenta crear un nuevo enlace compartido
         link_metada = dbx.sharing_create_shared_link_with_settings(path=folder_path)
         print(f"Nuevo enelace creado para:{folder_path}")
-        return link_metada.url
-    except dropbox.exceptions.ApiError as error:
+        return link_metada.url # type: ignore
+    except dropbox.exceptions.ApiError as error: # type: ignore
         #Si el enlace ya exixte, la API devuelve un error específico
         if error.error.is_shared_link_already_exists():
             #Si ya existe,simplemente obtenemos el enlace existente
-            links =dbx.sharing_list_shared_links(path=folder_path, direct_only=True).links
+            links =dbx.sharing_list_shared_links(path=folder_path, direct_only=True).links # type: ignore
             print(f"enlace ya existia para: {folder_path}")
             return links[0].url
         else:

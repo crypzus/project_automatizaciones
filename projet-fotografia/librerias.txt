@@ -8,7 +8,7 @@ pip install dropbox  -------------------->libreria ofcial de dropbox
 
 {
   "event_type": "Pedido creado",
-  "job_id": "JOB-103",
+  "job_id": "JOB_101",
   "style": "HDR premium",
   "client_name": "Maria Rodriguez",
   "property_address": "Av. Siempre Viva 123"
@@ -16,5 +16,8 @@ pip install dropbox  -------------------->libreria ofcial de dropbox
 
 {
   "event_type": "Fotógrafo completado",
-  "job_id": "JOB-103"
+  "job_id": "JOB_101"
 }
+
+siempre tengo que gerar el token 
+https://www.dropbox.com/developers/apps

@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+import time
+from datetime import datetime, timedelta
+from fastapi import FastAPI, BackgroundTasks
 from pydantic import BaseModel # 1. Importamos la herramienta para crear plantillas
 from typing import Optional   # 2. Importamos una ayuda para campos opcionales
-from dropbox_manager import get_link_compartidos
+from dropbox_manager import get_link_compartidos, dbx
 
 # 3. Creamos nuestra plantilla para los datos del webhook
 class WebhookData(BaseModel):
@@ -19,8 +21,54 @@ app = FastAPI()
 # El diccionario para guardar temporalmente la información de los trabajos
 trabajos_pendientes = {}
 
+def monitor_folder_uploads(job_id:str, folder_path:str):
+    """
+    Esta función se ejecuta en segundo plano para monitorear una carpeta de Dropbox.
+    """
+    print(f"[{job_id}] - Iniciando monitoreo de la carpeta: {folder_path}")
+    # Pausa inicial de 10 minutos para dar tiempo a que comience la subida
+    time.sleep(20)
+    last_activity_time = datetime.now()
+    previous_file_count = -1
+    
+    while True:
+        try:
+            ## Obtenemos la lista de archivos en la carpeta
+            files = dbx.files_list_folder(folder_path, recursive=True).entries # type: ignore
+            current_file_count = len(files)
+            
+            print(f"[{job_id}] - Revisando... Archivos encontrados: {current_file_count}")
+            
+            if current_file_count > previous_file_count:
+                print(f"[{job_id}] - ¡Atividad detectada! Se subieron nuevos archivos.")
+                last_activity_time = datetime.now()
+                previous_file_count = current_file_count
+            
+            # Comprobamos si han pasado 30 minutos desde la última actividad
+            inactivity_period = datetime.now() - last_activity_time
+            if inactivity_period > timedelta(seconds=30):
+                print(f"[{job_id}] - No se ha detectado actividad por 30 minutos.")
+               
+                # Ahora que sabemos que la subida terminó, obtenemos el enlace
+                enlace = get_link_compartidos(folder_path)
+                if enlace:
+                     print(f"[{job_id}] - Enlace de Dropbox:{enlace}")
+                     # El próximo paso será llamar a la función de envío de correo aquí
+                else:
+                    print(f"[{job_id}] - No se puedo generar el enlace de Dropbox.")
+                break #salimos del bucle de monitoreo
+        
+        except Exception as e:
+            print(f"[{job_id}] - Error durante el monitoreo: {e}")
+            break
+        #esperemos 5 minutos antes de la siguiente revision
+        time.sleep(10)
+        
+            
+
+
 @app.post("/webhook")
-async def recibir_webhook(data: WebhookData): # <--- ¡El gran cambio está aquí!
+async def recibir_webhook(data: WebhookData, background_tasks: BackgroundTasks): # <--- ¡El gran cambio está aquí!
     print(f"Webhook recibido. Tipo de evento: {data.event_type}")
 
     # Lógica para manejar diferentes tipos de eventos
@@ -38,18 +86,17 @@ async def recibir_webhook(data: WebhookData): # <--- ¡El gran cambio está aqu�
         if data.job_id in trabajos_pendientes:
             print("Este trabajo está en nuestra lista de pendientes.")
             info_trabajo = trabajos_pendientes[data.job_id]
-            direccion = info_trabajo.get("property_address", "direccion-desconocida")
             
-            #Construimos  la ruta de la carpeta(!se hara dinamico despues !)
-            ruta_carpeta_dropbox = f"/Apps/AutomatizacionFotografia/{direccion}"
-            print(f"Buscando enlace para la carpeta: {ruta_carpeta_dropbox}")
-            enlace = get_link_compartidos(ruta_carpeta_dropbox)
-            if enlace:
-                print(f"¡Exito! El enlace compartido es:{enlace}")
-            else:
-                print("Error: No se ouedo obtener el enlace de Dropbox")         
+             # Construimos la ruta de la carpeta (usando el método robusto con job_id)
+            folder_path =  f"/Apps/AutomatizacionFotografia/{data.job_id}"
+            # ¡Activamos el vigilante en segundo plano!
+            background_tasks.add_task(monitor_folder_uploads, data.job_id, folder_path)
+            
+            print(f"Tarea de monitoreo para {data.job_id} iniciando en segundo plano, La app sigue libre.")
+            # Ya no eliminamos el trabajo pendiente aquí, lo haremos después de enviar el correo
         else:
-            print("Alerta: Trabajo completado pero no teníamos registro del pedido.")
-
+            print(f"Alerta: Trabajo {data.job_id} completado pero no teniamos registro del pedido.")
+           
+            
     print("Estado actual de trabajos pendientes:", trabajos_pendientes)
     return {"status": "procesado", "job_id": data.job_id}
