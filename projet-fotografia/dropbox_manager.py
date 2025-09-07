@@ -13,22 +13,24 @@ dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 
 def get_link_compartidos(folder_path):
     """Obtiene los enlaces compartidos de una carpeta específica en Dropbox."""
-    
+    dropbox_link = None
     try:
         #Intenta crear un nuevo enlace compartido
         link_metada = dbx.sharing_create_shared_link_with_settings(path=folder_path)
+        dropbox_link = link_metada.url # type: ignore
         print(f"Nuevo enelace creado para:{folder_path}")
-        return link_metada.url # type: ignore
     except dropbox.exceptions.ApiError as error: # type: ignore
         #Si el enlace ya exixte, la API devuelve un error específico
         if error.error.is_shared_link_already_exists():
             #Si ya existe,simplemente obtenemos el enlace existente
             links =dbx.sharing_list_shared_links(path=folder_path, direct_only=True).links # type: ignore
-            print(f"enlace ya existia para: {folder_path}")
-            return links[0].url
+            if links:
+                dropbox_link =  links[0].url
+                print(f"enlace ya existia para: {folder_path}")
+                
         else:
             #Si es otro tipo de error, lo mostramos y devolvemos None.
             print(f"Error de API en Dropbox: {error}")
-            return None
+    return dropbox_link
             
     

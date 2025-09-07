@@ -4,6 +4,7 @@ from fastapi import FastAPI, BackgroundTasks
 from pydantic import BaseModel # 1. Importamos la herramienta para crear plantillas
 from typing import Optional   # 2. Importamos una ayuda para campos opcionales
 from dropbox_manager import get_link_compartidos, dbx
+from email_manager import send_notification_email
 
 # 3. Creamos nuestra plantilla para los datos del webhook
 class WebhookData(BaseModel):
@@ -53,7 +54,20 @@ def monitor_folder_uploads(job_id:str, folder_path:str):
                 enlace = get_link_compartidos(folder_path)
                 if enlace:
                      print(f"[{job_id}] - Enlace de Dropbox:{enlace}")
-                     # El próximo paso será llamar a la función de envío de correo aquí
+                     # ¡llamemos al cartero!
+                     info_trabajo = trabajos_pendientes.get(job_id)
+                     if info_trabajo:
+                        # AÑadimos el job_id a la info para el correo 
+                        info_trabajo['job_id'] = job_id
+                        correo_enviado = send_notification_email(info_trabajo, enlace)
+                        if correo_enviado:
+                            #Si el correo se envió, ahora eliminamo el trabajo pendiente
+                            if job_id in trabajos_pendientes:
+                                del trabajos_pendientes[job_id]
+                                print(f"[{job_id}] - Trabajo completo y elimanado de pendientes.")
+                        else:
+                            print(f"[{job_id}] - No se encotró informacion del trabajo para enviar correo.")
+                     
                 else:
                     print(f"[{job_id}] - No se puedo generar el enlace de Dropbox.")
                 break #salimos del bucle de monitoreo
