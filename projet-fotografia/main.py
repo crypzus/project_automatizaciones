@@ -28,9 +28,9 @@ def monitor_folder_uploads(job_id:str, folder_path:str):
     """
     print(f"[{job_id}] - Iniciando monitoreo de la carpeta: {folder_path}")
     # Pausa inicial de 10 minutos para dar tiempo a que comience la subida
-    time.sleep(20)
+    time.sleep(600)
     last_activity_time = datetime.now()
-    previous_file_count = -1
+    previous_file_count = - 1
     
     while True:
         try:
@@ -41,13 +41,13 @@ def monitor_folder_uploads(job_id:str, folder_path:str):
             print(f"[{job_id}] - Revisando... Archivos encontrados: {current_file_count}")
             
             if current_file_count > previous_file_count:
-                print(f"[{job_id}] - ¡Atividad detectada! Se subieron nuevos archivos.")
+                print(f"[{job_id}] - ¡Actividad detectada! Se subieron nuevos archivos.")
                 last_activity_time = datetime.now()
                 previous_file_count = current_file_count
             
             # Comprobamos si han pasado 30 minutos desde la última actividad
             inactivity_period = datetime.now() - last_activity_time
-            if inactivity_period > timedelta(seconds=30):
+            if inactivity_period > timedelta(minutes=30):
                 print(f"[{job_id}] - No se ha detectado actividad por 30 minutos.")
                
                 # Ahora que sabemos que la subida terminó, obtenemos el enlace
@@ -61,12 +61,12 @@ def monitor_folder_uploads(job_id:str, folder_path:str):
                         info_trabajo['job_id'] = job_id
                         correo_enviado = send_notification_email(info_trabajo, enlace)
                         if correo_enviado:
-                            #Si el correo se envió, ahora eliminamo el trabajo pendiente
+                            #Si el correo se envió, ahora eliminamos el trabajo pendiente
                             if job_id in trabajos_pendientes:
                                 del trabajos_pendientes[job_id]
-                                print(f"[{job_id}] - Trabajo completo y elimanado de pendientes.")
+                                print(f"[{job_id}] - Trabajo completo y eliminado de pendientes.")
                         else:
-                            print(f"[{job_id}] - No se encotró informacion del trabajo para enviar correo.")
+                            print(f"[{job_id}] - No se encontró informacion del trabajo para enviar correo.")
                      
                 else:
                     print(f"[{job_id}] - No se puedo generar el enlace de Dropbox.")
@@ -76,7 +76,7 @@ def monitor_folder_uploads(job_id:str, folder_path:str):
             print(f"[{job_id}] - Error durante el monitoreo: {e}")
             break
         #esperemos 5 minutos antes de la siguiente revision
-        time.sleep(10)
+        time.sleep(300)
         
             
 

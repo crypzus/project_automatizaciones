@@ -4,8 +4,14 @@ uvicorn main:app --reload  --------------------> para correr el servidor
 pip install python-dotenv   --------------------> crea un archivo secreto 
 pip install dropbox  -------------------->libreria ofcial de dropbox 
 
+archivo .env
 
+DROPBOX_ACCESS_TOKEN=""
+EMAIL_ADDRESS=""
+EMAIL_PASSWORD=""
 
+para crear los requerimiento para que el programa funcione
+pip freeze > requirements.txt
 
 {
   "event_type": "Pedido creado",
@@ -20,5 +26,7 @@ pip install dropbox  -------------------->libreria ofcial de dropbox
   "job_id": "JOB_101"
 }
 
+
+ip del server = http://127.0.0.1:8000/docs
 siempre tengo que gerar el token 
 https://www.dropbox.com/developers/apps

@@ -13,12 +13,12 @@ PASSWORD = os.getenv("EMAIL_PASSWORD")
 DESTINATARIOS_PREMIUM = ["crypzus91@gmail.com"]
 DESTINATARIOS_BASIC = ["bastardomejiasines1998@gmail.com"]
 
-def send_notification_email(job_info: dict, dropox_link:str):
+def send_notification_email(job_info: dict, dropbox_link:str):
     """
     Envía un correo de notificación al equipo de edición correcto.
     """
     style = job_info.get("style", "Basico")
-    if "premiun" in style.lower():
+    if "premium" in style.lower():
         destinatarios = DESTINATARIOS_PREMIUM
     else:
         destinatarios = DESTINATARIOS_BASIC
@@ -51,12 +51,12 @@ def send_notification_email(job_info: dict, dropox_link:str):
     
     try:
         #---envio del correo---
-        server = smtplib.SMTP("smpt.gmail.com", 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls() #inicia conexion segura
         server.login(REMITENTE, PASSWORD)
         server.sendmail(REMITENTE, destinatarios, message.as_string())
         server.quit()
-        print(f"Correo de notificacion para {job_info.get('job:id')} enviado a: {destinatarios}")
+        print(f"Correo de notificacion para {job_info.get('job_id')} enviado a: {destinatarios}")
         return True
     except Exception as e:
         print (f"Error al enviar el correo: {e}")
